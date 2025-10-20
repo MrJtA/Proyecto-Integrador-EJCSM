@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<biblioteca>
+    <libro ISBN="2">
+        <nombre>Odisea</nombre>
+        <autor>Homero</autor>
+        <editorial>Alianza</editorial>
+        <genero>Cl�sicos;</genero>
+    </libro>
+</biblioteca>

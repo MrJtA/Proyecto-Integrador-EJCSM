@@ -1,0 +1,14 @@
+# Exclusiones de Visual Studio Code
+.vscode/
+
+# Exclusiones de Java y compilacion (archivos binarios, etc.)
+*.class
+*.jar
+*.war
+*.ear
+/target/ # Usado por Maven o algunos proyectos
+/bin/    # Carpeta de compilacion comun
+
+# Archivos de logs y temporales
+*.log
+/tmp/
