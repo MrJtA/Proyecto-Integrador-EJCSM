@@ -1,5 +1,6 @@
-Versión 1.0: Manejo de archivos de texto, binarios y XML.
+Versión 2.0: Acceso a bases de datos.
 - Mover métodos de buscar y mostrar de las clases del fichero a la clase de vista.
-- Modificar método buscar para que pueda buscar también por nombre del libro.
+- Modificar método buscar para que pueda buscar también por titulo del libro.
 - Hacer packages.
 - Hacer fallos en el tipo de fichero y manejar mejor los errores: fichero mal escrito, fichero inadecuado para las operaciones de un fichero en cuestión.
+- Hacer bases de datos.

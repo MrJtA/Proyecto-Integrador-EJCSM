@@ -11,13 +11,6 @@ public final class Texto extends Fichero {
 
     @Override
     public Map<Integer, Libro> leerFichero() {
-        /*
-        String nombreFichero = this.file.getName().toLowerCase();
-        if (!nombreFichero.endsWith(".txt")) {
-            System.out.println("Error al leer el fichero. El fichero debe ser de texto (.txt).");
-            return null;
-        }
-        */
         Map<Integer, Libro> aux = new HashMap<>();
         try (FileReader fr = new FileReader(this.file);
              BufferedReader br = new BufferedReader(fr)) {

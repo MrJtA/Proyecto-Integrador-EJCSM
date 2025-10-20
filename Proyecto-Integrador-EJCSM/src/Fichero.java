@@ -66,10 +66,10 @@ public abstract class Fichero implements Funcionalidades {
                 String valorAtributo = String.valueOf(isbn);
                 libro.setAttribute("ISBN", valorAtributo);
                 Libro libroenCuestion = this.biblioteca.get(isbn);
-                Element nombre = documento.createElement("nombre");
-                Text textoNombre = documento.createTextNode(libroenCuestion.getNombre());
-                nombre.appendChild(textoNombre);
-                libro.appendChild(nombre);
+                Element titulo = documento.createElement("titulo");
+                Text textoTitulo = documento.createTextNode(libroenCuestion.getNombre());
+                titulo.appendChild(textoTitulo);
+                libro.appendChild(titulo);
                 Element autor = documento.createElement("autor");
                 Text textoAutor = documento.createTextNode(libroenCuestion.getAutor());
                 autor.appendChild(textoAutor);

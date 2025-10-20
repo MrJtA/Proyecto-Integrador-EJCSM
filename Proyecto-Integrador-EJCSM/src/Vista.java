@@ -79,15 +79,15 @@ public class Vista {
             System.out.print("ISBN: ");
             int isbn = sc.nextInt();
             sc.nextLine();
-            System.out.print("Nombre: ");
-            String nombre = sc.nextLine();
+            System.out.print("Titulo: ");
+            String titulo = sc.nextLine();
             System.out.print("Autor: ");
             String autor = sc.nextLine();
             System.out.print("Editorial: ");
             String editorial = sc.nextLine();
             System.out.print("Género: ");
             String genero = sc.nextLine();
-            libro = new Libro(isbn, nombre, autor, editorial, genero);
+            libro = new Libro(isbn, titulo, autor, editorial, genero);
         } catch (InputMismatchException e) {
             System.err.println("Error: ISBN inválido.");
             System.out.println("Por favor, introduce un ISBN válido.");
