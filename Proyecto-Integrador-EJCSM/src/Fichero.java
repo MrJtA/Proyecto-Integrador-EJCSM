@@ -17,6 +17,10 @@ public abstract class Fichero implements Funcionalidades {
         this.biblioteca = new HashMap<>();
     }
 
+    public Fichero() {
+        this.file = null;
+    }
+
     @Override
     public abstract Map<Integer, Libro> leerFichero();
 
@@ -158,8 +162,7 @@ public abstract class Fichero implements Funcionalidades {
         } else if (this.biblioteca.containsKey(libro.getISBN())) {
             System.out.println("Error: Ya existe un libro con el mismo isbn: " + libro.getISBN());
         } else {
-            this.biblioteca.remove(isbn);
-            this.biblioteca.put(libro.getISBN(), libro);
+            this.biblioteca.replace(isbn, libro);
             System.out.println("El libro con el isbn: " + isbn + ", se ha sustituido correctamente por el libro con el isbn: " + libro.getISBN());
             escribirLista();
         }
