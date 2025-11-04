@@ -20,7 +20,7 @@ public class Libro implements Serializable {
         return this.isbn;
     }
 
-    public String getNombre() {
+    public String getTitulo() {
         return this.titulo;
     }
 

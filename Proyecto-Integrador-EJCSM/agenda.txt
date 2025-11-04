@@ -1,9 +1,9 @@
-Versión 2.1: Acceso a bases de datos. 
-- Hacer la vista y el controlador.
-- Intentar herencia de AccesoBD con la clase Fichero.
-- Mostrar y buscar AccesoBD
+Versión 2.2: Acceso a bases de datos. 
 - Traspasar datos de BD, y a BD.
+- Ver leerFichero.
+- Pensar si es buena idea hacer una clase abstracta universal.
+- Pensar si es buena idea hacer un escribirLista para Database.
 - Mover métodos de buscar y mostrar de las clases del fichero a la clase de vista.
 - Modificar método buscar para que pueda buscar también por titulo del libro.
 - Hacer packages.
-- Hacer fallos en el tipo de fichero y manejar mejor los errores: fichero mal escrito, fichero inadecuado para las operaciones de un fichero en cuestión.
+- Escribir mensajes error.

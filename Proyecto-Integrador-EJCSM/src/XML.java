@@ -13,13 +13,6 @@ public final class XML extends Fichero {
 
     @Override
     public Map<Integer, Libro> leerFichero() {
-        /*
-        String nombreFichero = this.file.getName().toLowerCase();
-        if (!nombreFichero.endsWith(".xml")) {
-            System.out.println("Error al leer el fichero. El fichero debe ser xml (.xml).");
-            return null;
-        }
-        */
         Map<Integer, Libro> aux = new HashMap<>();
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -54,7 +47,7 @@ public final class XML extends Fichero {
 
     @Override
     public void escribirLista() {
-        super.escribirListaXML(this.file);
+        super.escribirListaXML();
     }
 
 }

@@ -1,4 +1,5 @@
 import java.io.*;
+import java.sql.*;
 import java.util.*;
 import javax.xml.parsers.*;
 import javax.xml.transform.*;
@@ -17,19 +18,12 @@ public abstract class Fichero implements Funcionalidades {
         this.biblioteca = new HashMap<>();
     }
 
-    public Fichero() {
-        this.file = null;
-    }
-
     @Override
     public abstract Map<Integer, Libro> leerFichero();
 
-    @Override
     public abstract void escribirLista();
-    
-    @Override
-    public void escribirListaTexto(File file) {
-        file = this.file;
+
+    public void escribirListaTexto() {
         try (FileWriter fw = new FileWriter(file);
         BufferedWriter bw = new BufferedWriter(fw)) {
             boolean comienza = true;
@@ -45,8 +39,7 @@ public abstract class Fichero implements Funcionalidades {
         }
     }
 
-    @Override
-    public void escribirListaBinario(File file) {
+    public void escribirListaBinario() {
         try (FileOutputStream fos = new FileOutputStream(file);
         ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             for (Libro libro : this.biblioteca.values()) {
@@ -57,36 +50,34 @@ public abstract class Fichero implements Funcionalidades {
         }
     }
 
-    @Override
-    public void escribirListaXML(File file) {
+    public void escribirListaXML() {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             DOMImplementation implementation = builder.getDOMImplementation();
             Document documento = implementation.createDocument(null, "biblioteca", null);
             documento.setXmlVersion("1.0");
-            for (int isbn : this.biblioteca.keySet()) {
-                Element libro = documento.createElement("libro");
-                String valorAtributo = String.valueOf(isbn);
-                libro.setAttribute("ISBN", valorAtributo);
-                Libro libroenCuestion = this.biblioteca.get(isbn);
+            for (Libro libro : this.biblioteca.values()) {
+                Element elemento = documento.createElement("libro");
+                String valorAtributo = String.valueOf(libro.getISBN());
+                elemento.setAttribute("ISBN", valorAtributo);
                 Element titulo = documento.createElement("titulo");
-                Text textoTitulo = documento.createTextNode(libroenCuestion.getNombre());
+                Text textoTitulo = documento.createTextNode(libro.getTitulo());
                 titulo.appendChild(textoTitulo);
-                libro.appendChild(titulo);
+                elemento.appendChild(titulo);
                 Element autor = documento.createElement("autor");
-                Text textoAutor = documento.createTextNode(libroenCuestion.getAutor());
+                Text textoAutor = documento.createTextNode(libro.getAutor());
                 autor.appendChild(textoAutor);
-                libro.appendChild(autor);
+                elemento.appendChild(autor);
                 Element editorial = documento.createElement("editorial");
-                Text textoEditorial = documento.createTextNode(libroenCuestion.getEditorial());
+                Text textoEditorial = documento.createTextNode(libro.getEditorial());
                 editorial.appendChild(textoEditorial);
-                libro.appendChild(editorial);
+                elemento.appendChild(editorial);
                 Element genero = documento.createElement("genero");
-                Text textoGenero = documento.createTextNode(libroenCuestion.getGenero());
+                Text textoGenero = documento.createTextNode(libro.getGenero());
                 genero.appendChild(textoGenero);
-                libro.appendChild(genero);
-                documento.getDocumentElement().appendChild(libro);
+                elemento.appendChild(genero);
+                documento.getDocumentElement().appendChild(elemento);
             }
             Source source = new DOMSource(documento);
             Result result = new StreamResult(file);
@@ -104,32 +95,72 @@ public abstract class Fichero implements Funcionalidades {
     }
 
     @Override
-    public void traspasarDatos(File file) {
+    public void traspasarDatosFichero(File file) {
         String nombreFichero = file.getName().toLowerCase();
         if (nombreFichero.endsWith(".txt") || nombreFichero.endsWith("")) {
-            escribirListaTexto(file);
+            escribirListaTexto();
         } else if (nombreFichero.endsWith(".bin")) {
-            escribirListaBinario(file);
+            escribirListaBinario();
         } else if (nombreFichero.endsWith(".xml")) {
-            escribirListaXML(file);
+            escribirListaXML();
         } else {
             System.out.println("Error: Traspaso de datos a ficheros de la extensión de " + nombreFichero + " no disponible.");
             System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
             return;
         }
-        System.out.println("Se ha creado una copia de seguridad en el fichero '" + file.getAbsolutePath() + "' correctamente.");
+        System.out.println("Se han traspasado los datos y creado una copia de seguridad en el fichero '" + file.getAbsolutePath() + "' correctamente.");
     }
 
     @Override
-    public void buscar(int isbn) {
-        if (this.biblioteca.isEmpty()) {
-            System.out.println("Error: No hay ningún libro registrado.");
-        } else {
-            if (this.biblioteca.containsKey(isbn)) {
-                System.out.println("Se ha encontrado el libro: " + this.biblioteca.get(isbn));
-            } else {
-                System.out.println("Error: No se ha encontrado el libro.");
+    public void traspasarDatosDatabase(String nombreDatabase) {
+        try (Connection conexion=DriverManager.getConnection("jdbc:mysql://localhost:3306/peliculas","root", "root")) {
+            Boolean existeDatabase = false;
+            String query = "show databases like ?";
+            try (PreparedStatement ps=conexion.prepareStatement(query)){
+                ps.setString(1, nombreDatabase);
+                ResultSet rs=ps.executeQuery();
+                if (rs.next()){
+                    existeDatabase = true;
+                }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
             }
+            if (!existeDatabase) {
+                String query2 = "create database " + nombreDatabase;
+                try (PreparedStatement ps = conexion.prepareStatement(query2)) {
+                    ps.executeUpdate();
+                } catch (SQLException e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+            try (Connection caux = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + nombreDatabase, "root", "root")) {
+                String query3 = "create table if not exists libro (isbn int primary key, titulo varchar (100), autor varchar (100), editorial varchar (100), genero varchar (100))";
+                PreparedStatement ps1 = caux.prepareStatement(query3);
+                ps1.executeUpdate();
+                ps1.close();
+                String query4 = "TRUNCATE TABLE libro";
+                PreparedStatement ps2 = caux.prepareStatement(query4);
+                ps2.executeUpdate();
+                ps2.close();
+                for (Libro libro : this.biblioteca.values()) {
+                    String query5="insert into pelicula (isbn,titulo,autor,editorial,genero) values (?,?,?,?,?)";
+                    try (PreparedStatement ps3=caux.prepareStatement(query5)) {
+                        ps3.setInt(1, libro.getISBN());
+                        ps3.setString(2, libro.getTitulo());
+                        ps3.setString(3, libro.getAutor());
+                        ps3.setString(4, libro.getEditorial());
+                        ps3.setString(5, libro.getGenero());
+                        ps3.executeUpdate();
+                        ps3.close();
+                    } catch (SQLException e) {
+                        System.err.println(e.getMessage());
+                    }
+                }
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
         }
     }
 
@@ -165,18 +196,6 @@ public abstract class Fichero implements Funcionalidades {
             this.biblioteca.replace(isbn, libro);
             System.out.println("El libro con el isbn: " + isbn + ", se ha sustituido correctamente por el libro con el isbn: " + libro.getISBN());
             escribirLista();
-        }
-    }
-
-    @Override
-    public void mostrar() {
-        if (!this.biblioteca.isEmpty()) {
-            System.out.println("Error: No hay ningún libro registrado.");
-        } else {
-            System.out.println("Libros registrados en " + this.file + " : ");
-            for (Libro libro : this.biblioteca.values()) {
-                System.out.println(libro.toString());
-            }
         }
     }
 

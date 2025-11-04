@@ -1,4 +1,3 @@
-
 import java.io.*;
 import java.util.*;
 
@@ -33,7 +32,7 @@ public final class Texto extends Fichero {
 
     @Override
     public void escribirLista() {
-        super.escribirListaTexto(this.file);
+        super.escribirListaTexto();
     }
 
 }

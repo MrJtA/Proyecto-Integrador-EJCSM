@@ -31,7 +31,7 @@ public final class Binario extends Fichero implements Serializable {
 
     @Override
     public void escribirLista() {
-        super.escribirListaBinario(this.file);
+        super.escribirListaBinario();
     }
 
 }
