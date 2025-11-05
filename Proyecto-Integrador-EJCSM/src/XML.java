@@ -17,7 +17,7 @@ public final class XML extends Fichero {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
-            Document documento = builder.parse("ficheros/File.xml");
+            Document documento = builder.parse(this.file);
             NodeList padres = documento.getElementsByTagName("libro");
             for (int i=0; i<padres.getLength(); i++) {
                 Node nodo = padres.item(i);

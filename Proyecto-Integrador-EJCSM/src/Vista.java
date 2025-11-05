@@ -1,4 +1,5 @@
 import java.io.*;
+import java.sql.*;
 import java.util.*;
 
 public class Vista {
@@ -40,7 +41,7 @@ public class Vista {
         return opcion;
     }
 
-    public File pedirFichero() {
+    public File pedirFichero() throws IOException {
         File aux = null;
         boolean entradaValida = false;
         while (!entradaValida) {
@@ -52,29 +53,51 @@ public class Vista {
             }
             aux = new File(rutaFichero);
             if (aux.exists()) {
-                if (aux.isDirectory()) {
-                    System.out.println("Error: La ruta introducida es un directorio, no un fichero.");
-                    System.out.println("Por favor, introduce un nombre de fichero.");
-                    continue;
-                }
                 entradaValida = true;
             } else {
                 try {
                     aux.createNewFile();
-                    System.out.println("El fichero no existe, se va a crear.");
+                    System.out.println("Se ha creado el fichero '" + aux + "'.");
                     entradaValida = true;
                 } catch (IOException e) {
                     System.err.println("Error: Fichero inválido.");
                     System.out.println("Por favor, introduce una ruta válida.");
+                    throw e;
                 }
             }
         }
         return aux;
     }
 
-    public String pedirDatabase(){
+    public String pedirDatabase() throws SQLException {
         System.out.println("Introduce el nombre de la base de datos: ");
         String nombre = sc.nextLine();
+        try (Connection conexion = DriverManager.getConnection("jdbc:mysql://localhost:3306/peliculas", "root", "root")) {
+            boolean existeDatabase = false;
+            String query = "show databases like ?";
+            try (PreparedStatement ps = conexion.prepareStatement(query)) {
+                ps.setString(1, nombre);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        existeDatabase = true;
+                    }
+                }
+            } catch (SQLException e) {
+                System.err.println("Error al verificar la existencia de la base de datos: " + e.getMessage());
+            }
+            if (!existeDatabase) {
+                String query2 = "CREATE DATABASE " + nombre;
+                try (java.sql.Statement stmt = conexion.createStatement()) {
+                    stmt.executeUpdate(query2);
+                    System.out.println("Se ha creado la base de datos '" + nombre + "'.");
+                } catch (SQLException e) {
+                    System.err.println("Error al crear la base de datos: " + e.getMessage());
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al establecer conexión inicial con la base de datos: " + e.getMessage());
+            throw e;
+        }
         return nombre;
     }
 
@@ -124,19 +147,19 @@ public class Vista {
 
     public void buscar(Map<Integer, Libro> biblioteca, int isbn) {
         if (biblioteca.isEmpty()) {
-            System.out.println("Error: No hay ningún libro registrado.");
+            System.out.println("No hay ningún libro registrado.");
         } else {
             if (biblioteca.containsKey(isbn)) {
                 System.out.println("Se ha encontrado el libro: " + biblioteca.get(isbn));
             } else {
-                System.out.println("Error: No se ha encontrado el libro.");
+                System.out.println("No se ha encontrado el libro.");
             }
         }
     }
 
-    public void mostrar(Map<Integer, Libro> biblioteca){
-        if (!biblioteca.isEmpty()) {
-            System.out.println("Error: No hay ningún libro registrado.");
+    public void mostrar(Map<Integer, Libro> biblioteca) {
+        if (biblioteca.isEmpty()) {
+            System.out.println("No hay ningún libro registrado.");
         } else {
             System.out.println("Libros registrados: ");
             for (Libro libro : biblioteca.values()) {
@@ -144,7 +167,5 @@ public class Vista {
             }
         }
     }
-
-
 
 }

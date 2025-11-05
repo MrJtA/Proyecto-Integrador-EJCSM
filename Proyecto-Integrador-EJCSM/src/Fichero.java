@@ -95,76 +95,6 @@ public abstract class Fichero implements Funcionalidades {
     }
 
     @Override
-    public void traspasarDatosFichero(File file) {
-        String nombreFichero = file.getName().toLowerCase();
-        if (nombreFichero.endsWith(".txt") || nombreFichero.endsWith("")) {
-            escribirListaTexto();
-        } else if (nombreFichero.endsWith(".bin")) {
-            escribirListaBinario();
-        } else if (nombreFichero.endsWith(".xml")) {
-            escribirListaXML();
-        } else {
-            System.out.println("Error: Traspaso de datos a ficheros de la extensión de " + nombreFichero + " no disponible.");
-            System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
-            return;
-        }
-        System.out.println("Se han traspasado los datos y creado una copia de seguridad en el fichero '" + file.getAbsolutePath() + "' correctamente.");
-    }
-
-    @Override
-    public void traspasarDatosDatabase(String nombreDatabase) {
-        try (Connection conexion=DriverManager.getConnection("jdbc:mysql://localhost:3306/peliculas","root", "root")) {
-            Boolean existeDatabase = false;
-            String query = "show databases like ?";
-            try (PreparedStatement ps=conexion.prepareStatement(query)){
-                ps.setString(1, nombreDatabase);
-                ResultSet rs=ps.executeQuery();
-                if (rs.next()){
-                    existeDatabase = true;
-                }
-            } catch (SQLException e) {
-                System.err.println(e.getMessage());
-            }
-            if (!existeDatabase) {
-                String query2 = "create database " + nombreDatabase;
-                try (PreparedStatement ps = conexion.prepareStatement(query2)) {
-                    ps.executeUpdate();
-                } catch (SQLException e) {
-                    System.err.println(e.getMessage());
-                }
-            }
-            try (Connection caux = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + nombreDatabase, "root", "root")) {
-                String query3 = "create table if not exists libro (isbn int primary key, titulo varchar (100), autor varchar (100), editorial varchar (100), genero varchar (100))";
-                PreparedStatement ps1 = caux.prepareStatement(query3);
-                ps1.executeUpdate();
-                ps1.close();
-                String query4 = "TRUNCATE TABLE libro";
-                PreparedStatement ps2 = caux.prepareStatement(query4);
-                ps2.executeUpdate();
-                ps2.close();
-                for (Libro libro : this.biblioteca.values()) {
-                    String query5="insert into pelicula (isbn,titulo,autor,editorial,genero) values (?,?,?,?,?)";
-                    try (PreparedStatement ps3=caux.prepareStatement(query5)) {
-                        ps3.setInt(1, libro.getISBN());
-                        ps3.setString(2, libro.getTitulo());
-                        ps3.setString(3, libro.getAutor());
-                        ps3.setString(4, libro.getEditorial());
-                        ps3.setString(5, libro.getGenero());
-                        ps3.executeUpdate();
-                        ps3.close();
-                    } catch (SQLException e) {
-                        System.err.println(e.getMessage());
-                    }
-                }
-            } catch (SQLException e) {
-                System.err.println(e.getMessage());
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
-    }
-
-    @Override
     public void insertar(Libro libro) {
         if (this.biblioteca.containsKey(libro.getISBN())) {
             System.out.println("Error: Ya existe un libro con el mismo isbn: " + libro.getISBN());
@@ -196,6 +126,58 @@ public abstract class Fichero implements Funcionalidades {
             this.biblioteca.replace(isbn, libro);
             System.out.println("El libro con el isbn: " + isbn + ", se ha sustituido correctamente por el libro con el isbn: " + libro.getISBN());
             escribirLista();
+        }
+    }
+
+    @Override
+    public void traspasarDatosFichero(File file) {
+        String nombreFichero = file.getName().toLowerCase();
+        if (nombreFichero.endsWith(".txt") || nombreFichero.endsWith("")) {
+            escribirListaTexto();
+        } else if (nombreFichero.endsWith(".bin")) {
+            escribirListaBinario();
+        } else if (nombreFichero.endsWith(".xml")) {
+            escribirListaXML();
+        } else {
+            System.out.println("Error: Traspaso de datos a ficheros de la extensión de " + nombreFichero + " no disponible.");
+            System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
+            return;
+        }
+        System.out.println("Se han traspasado los datos y creado una copia de seguridad en el fichero '" + file.getAbsolutePath() + "' correctamente.");
+    }
+
+    @Override
+    public void traspasarDatosDatabase(String nombreDatabase) {
+        try (Connection caux = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + nombreDatabase, "root", "root")) {
+            String query3 = "CREATE TABLE IF NOT EXISTS libro (isbn INT PRIMARY KEY, titulo VARCHAR (100), autor VARCHAR (100), editorial VARCHAR (100), genero VARCHAR (100))";
+            try (PreparedStatement ps1 = caux.prepareStatement(query3)) {
+                ps1.executeUpdate();
+            } catch (SQLException e) {
+                 System.err.println("Error al crear o verificar la tabla 'libro': " + e.getMessage());
+            }
+            String query4 = "TRUNCATE TABLE libro";
+            try (PreparedStatement ps2 = caux.prepareStatement(query4)) {
+                ps2.executeUpdate();
+            } catch (SQLException e) {
+                System.err.println("Error al truncar la tabla 'libro': " + e.getMessage());
+            }
+            String query5 = "INSERT INTO libro (isbn, titulo, autor, editorial, genero) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement ps3 = caux.prepareStatement(query5)) {
+                for (Libro libro : this.biblioteca.values()) {
+                    ps3.setInt(1, libro.getISBN());
+                    ps3.setString(2, libro.getTitulo());
+                    ps3.setString(3, libro.getAutor());
+                    ps3.setString(4, libro.getEditorial());
+                    ps3.setString(5, libro.getGenero());
+                    ps3.executeUpdate();
+                }
+                System.out.println("Se han traspasado los datos y creado una copia de seguridad en la base de datos '" + nombreDatabase + "' correctamente.");
+            } catch (SQLException e) {
+                System.err.println("Error al insertar un libro: " + e.getMessage());
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error al establecer conexión con la base de datos '" + nombreDatabase + "'" + e.getMessage());
         }
     }
 

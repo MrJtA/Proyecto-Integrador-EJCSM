@@ -1,14 +1,18 @@
+
+import java.io.IOException;
+import java.sql.SQLException;
+
 public class Controlador {
 
     private final Vista vista = new Vista();
     private Funcionalidades funcionalidades;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, SQLException {
         Controlador app = new Controlador();
         app.menu();
     }
 
-    public void menu() {
+    public void menu() throws IOException, SQLException {
         boolean seguir = true;
         while (seguir) {
             vista.menu();
@@ -35,7 +39,7 @@ public class Controlador {
         }
     }
 
-    public void subMenu() {
+    public void subMenu() throws IOException, SQLException {
         boolean seguir = true;
         while (seguir) {
             vista.subMenu();

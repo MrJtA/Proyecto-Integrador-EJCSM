@@ -50,131 +50,6 @@ public final class Database implements Funcionalidades {
     }
 
     @Override
-    public void traspasarDatosFichero(File file) {
-        String nombreFichero = file.getName().toLowerCase();
-        if (nombreFichero.endsWith(".txt") || nombreFichero.endsWith("")) {
-            try (FileWriter fw = new FileWriter(file);
-                BufferedWriter bw = new BufferedWriter(fw)) {
-                boolean comienza = true;
-                for (Libro libro : this.biblioteca.values()) {
-                    if (!comienza) {
-                        bw.newLine();
-                    }
-                    bw.write(libro.toString());
-                    comienza = false;
-                }
-            } catch (IOException e) {
-                System.err.println("Error al leer los libros del fichero: " + e.getMessage());
-            }
-        } else if (nombreFichero.endsWith(".bin")) {
-            try (FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                for (Libro libro : this.biblioteca.values()) {
-                    oos.writeObject(libro);
-                }
-            } catch (IOException e) {
-                System.err.println("Error al leer los libros del fichero: " + e.getMessage());
-            }
-        } else if (nombreFichero.endsWith(".xml")) {
-            try {
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                DOMImplementation implementation = builder.getDOMImplementation();
-                Document documento = implementation.createDocument(null, "biblioteca", null);
-                documento.setXmlVersion("1.0");
-                for (Libro libro : this.biblioteca.values()) {
-                    Element elemento = documento.createElement("libro");
-                    String valorAtributo = String.valueOf(libro.getISBN());
-                    elemento.setAttribute("ISBN", valorAtributo);
-                    Element titulo = documento.createElement("titulo");
-                    Text textoTitulo = documento.createTextNode(libro.getTitulo());
-                    titulo.appendChild(textoTitulo);
-                    elemento.appendChild(titulo);
-                    Element autor = documento.createElement("autor");
-                    Text textoAutor = documento.createTextNode(libro.getAutor());
-                    autor.appendChild(textoAutor);
-                    elemento.appendChild(autor);
-                    Element editorial = documento.createElement("editorial");
-                    Text textoEditorial = documento.createTextNode(libro.getEditorial());
-                    editorial.appendChild(textoEditorial);
-                    elemento.appendChild(editorial);
-                    Element genero = documento.createElement("genero");
-                    Text textoGenero = documento.createTextNode(libro.getGenero());
-                    genero.appendChild(textoGenero);
-                    elemento.appendChild(genero);
-                    documento.getDocumentElement().appendChild(elemento);
-                }
-                Source source = new DOMSource(documento);
-                Result result = new StreamResult(file);
-                Transformer transformer = newInstance().newTransformer();
-                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); 
-                transformer.transform(source, result);
-            } catch (ParserConfigurationException | DOMException e) {
-                System.err.println("Error al leer los libros del fichero: " + e.getMessage());
-            } catch (TransformerConfigurationException ex) {
-                System.err.println("Error de configuración del transformador XML: " + ex.getMessage());
-            } catch (TransformerException ex) {
-                System.err.println("Error durante la transformación o escritura del XML: " + ex.getMessage());
-            }
-        } else {
-            System.out.println("Error: Traspaso de datos a ficheros de la extensión de " + nombreFichero + " no disponible.");
-            System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
-            return;
-        }
-        System.out.println("Se han traspasado los datos y creado una copia de seguridad en el fichero '" + file.getAbsolutePath() + "' correctamente.");
-    }
-
-    @Override
-    public void traspasarDatosDatabase(String nombreDatabase) {
-        Boolean existeDatabase = false;
-        String query = "show databases like ?";
-        try (PreparedStatement ps = conexion.prepareStatement(query)){
-            ps.setString(1, nombreDatabase);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()){
-                existeDatabase = true;
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
-        if (!existeDatabase) {
-            String query2 = "create database " + nombreDatabase;
-            try (PreparedStatement ps = conexion.prepareStatement(query2)) {
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                System.err.println(e.getMessage());
-            }
-        }
-        try (Connection caux = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + nombreDatabase, usuario, contraseña)) {
-            String query3 = "create table if not exists libro (isbn int primary key, titulo varchar (100), autor varchar (100), editorial varchar (100), genero varchar (100))";
-            PreparedStatement ps1 = caux.prepareStatement(query3);
-            ps1.executeUpdate();
-            ps1.close();
-            String query4 = "TRUNCATE TABLE libro";
-            PreparedStatement ps2 = caux.prepareStatement(query4);
-            ps2.executeUpdate();
-            ps2.close();
-            for (Libro libro : this.biblioteca.values()) {
-                String query5="insert into pelicula (isbn,titulo,autor,editorial,genero) values (?,?,?,?,?)";
-                try (PreparedStatement ps3=caux.prepareStatement(query5)) {
-                    ps3.setInt(1, libro.getISBN());
-                    ps3.setString(2, libro.getTitulo());
-                    ps3.setString(3, libro.getAutor());
-                    ps3.setString(4, libro.getEditorial());
-                    ps3.setString(5, libro.getGenero());
-                    ps3.executeUpdate();
-                    ps3.close();
-                } catch (SQLException e) {
-                    System.err.println(e.getMessage());
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
-    }
-
-    @Override
     public void insertar(Libro libro) {
         String query = "INSERT INTO libro (isbn,titulo,autor,editorial,genero) VALUES (";
 		try (PreparedStatement ps = conexion.prepareStatement(query)) {
@@ -247,5 +122,119 @@ public final class Database implements Funcionalidades {
         }
     }
     */
+
+    @Override
+    public void traspasarDatosFichero(File file) {
+        String nombreFichero = file.getName().toLowerCase();
+        if (nombreFichero.endsWith(".txt") || nombreFichero.endsWith("")) {
+            try (FileWriter fw = new FileWriter(file);
+                BufferedWriter bw = new BufferedWriter(fw)) {
+                boolean comienza = true;
+                for (Libro libro : this.biblioteca.values()) {
+                    if (!comienza) {
+                        bw.newLine();
+                    }
+                    bw.write(libro.toString());
+                    comienza = false;
+                }
+            } catch (IOException e) {
+                System.err.println("Error al leer los libros del fichero: " + e.getMessage());
+            }
+
+        } else if (nombreFichero.endsWith(".bin")) {
+            try (FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                for (Libro libro : this.biblioteca.values()) {
+                    oos.writeObject(libro);
+                }
+            } catch (IOException e) {
+                System.err.println("Error al leer los libros del fichero: " + e.getMessage());
+            }
+        } else if (nombreFichero.endsWith(".xml")) {
+            try {
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                DOMImplementation implementation = builder.getDOMImplementation();
+                Document documento = implementation.createDocument(null, "biblioteca", null);
+                documento.setXmlVersion("1.0");
+                for (Libro libro : this.biblioteca.values()) {
+                    Element elemento = documento.createElement("libro");
+                    String valorAtributo = String.valueOf(libro.getISBN());
+                    elemento.setAttribute("ISBN", valorAtributo);
+                    Element titulo = documento.createElement("titulo");
+                    Text textoTitulo = documento.createTextNode(libro.getTitulo());
+                    titulo.appendChild(textoTitulo);
+                    elemento.appendChild(titulo);
+                    Element autor = documento.createElement("autor");
+                    Text textoAutor = documento.createTextNode(libro.getAutor());
+                    autor.appendChild(textoAutor);
+                    elemento.appendChild(autor);
+                    Element editorial = documento.createElement("editorial");
+                    Text textoEditorial = documento.createTextNode(libro.getEditorial());
+                    editorial.appendChild(textoEditorial);
+                    elemento.appendChild(editorial);
+                    Element genero = documento.createElement("genero");
+                    Text textoGenero = documento.createTextNode(libro.getGenero());
+                    genero.appendChild(textoGenero);
+                    elemento.appendChild(genero);
+                    documento.getDocumentElement().appendChild(elemento);
+                }
+                Source source = new DOMSource(documento);
+                Result result = new StreamResult(file);
+                Transformer transformer = newInstance().newTransformer();
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); 
+                transformer.transform(source, result);
+            } catch (ParserConfigurationException | DOMException e) {
+                System.err.println("Error al leer los libros del fichero: " + e.getMessage());
+            } catch (TransformerConfigurationException ex) {
+                System.err.println("Error de configuración del transformador XML: " + ex.getMessage());
+            } catch (TransformerException ex) {
+                System.err.println("Error durante la transformación o escritura del XML: " + ex.getMessage());
+            }
+        } else {
+            System.out.println("Error: Traspaso de datos a ficheros de la extensión de " + nombreFichero + " no disponible.");
+            System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
+            return;
+        }
+        System.out.println("Se han traspasado los datos y creado una copia de seguridad en el fichero '" + file.getAbsolutePath() + "' correctamente.");
+    }
+
+    @Override
+    public void traspasarDatosDatabase(String nombreDatabase) {
+        try (Connection caux = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + nombreDatabase, usuario, contraseña)) {
+            String query3 = "CREATE TABLE IF NOT EXISTS libro (isbn int primary key, titulo varchar (100), autor varchar (100), editorial varchar (100), genero varchar (100))";
+            try (PreparedStatement ps1 = caux.prepareStatement(query3)) {
+                ps1.executeUpdate();
+            } catch (SQLException e) {
+                System.err.println("Error al crear o verificar la tabla 'libro': " + e.getMessage());
+                return;
+            }
+            String query4 = "TRUNCATE TABLE libro";
+            try (PreparedStatement ps2 = caux.prepareStatement(query4)) {
+                ps2.executeUpdate();
+                System.out.println("Tabla 'libro' truncada (datos anteriores eliminados).");
+            } catch (SQLException e) {
+                System.err.println("Error al truncar la tabla 'libro': " + e.getMessage());
+                return; 
+            }
+            for (Libro libro : this.biblioteca.values()) {
+                String query5 = "INSERT INTO libro (isbn,titulo,autor,editorial,genero) values (?,?,?,?,?)";
+                try (PreparedStatement ps3=caux.prepareStatement(query5)) {
+                    ps3.setInt(1, libro.getISBN());
+                    ps3.setString(2, libro.getTitulo());
+                    ps3.setString(3, libro.getAutor());
+                    ps3.setString(4, libro.getEditorial());
+                    ps3.setString(5, libro.getGenero());
+                    ps3.executeUpdate();
+                    ps3.close();
+                } catch (SQLException e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+    }
 
 }

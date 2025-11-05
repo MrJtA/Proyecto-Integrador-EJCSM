@@ -1,9 +1,7 @@
-Versión 2.2: Acceso a bases de datos. 
-- Traspasar datos de BD, y a BD.
-- Ver leerFichero.
+Versión 2.3: Acceso a bases de datos. 
 - Pensar si es buena idea hacer una clase abstracta universal.
 - Pensar si es buena idea hacer un escribirLista para Database.
-- Mover métodos de buscar y mostrar de las clases del fichero a la clase de vista.
+- Pensar si es buena idea no hacer menu de ficheros y adaptarse al fichero puesto.
 - Modificar método buscar para que pueda buscar también por titulo del libro.
 - Hacer packages.
-- Escribir mensajes error.
+- Mejorar robustez en las conexiones con vista.

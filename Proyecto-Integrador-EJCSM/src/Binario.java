@@ -14,13 +14,15 @@ public final class Binario extends Fichero implements Serializable {
         try (FileInputStream fis = new FileInputStream(this.file);
         ObjectInputStream ois = new ObjectInputStream(fis)) {
             while (true) {
-            try {
-                Libro libro = (Libro) ois.readObject();
-                aux.put(libro.getISBN(), libro);
-            } catch (EOFException e) {
-                break;
+                try {
+                    Libro libro = (Libro) ois.readObject();
+                    aux.put(libro.getISBN(), libro);
+                } catch (EOFException e) {
+                    break;
+                }
             }
-        }
+        } catch (FileNotFoundException e) {
+            System.err.println("El fichero binario no existe, se creará al guardar.");
         } catch (IOException | NumberFormatException e) {
             System.err.println("Error al leer/parsear los libros del fichero: " + e.getMessage());
         } catch (Exception e) {
