@@ -1,5 +1,4 @@
 import java.io.*;
-import java.sql.*;
 import java.util.*;
 
 public class Vista {
@@ -7,11 +6,9 @@ public class Vista {
     final Scanner sc = new Scanner(System.in);
 
     public void menu() {
-        System.out.println("1. Ficheros de texto.");
-        System.out.println("2. Ficheros binarios.");
-        System.out.println("3. Ficheros XML.");
-        System.out.println("4. Bases de datos.");
-        System.out.println("5. Salir.");
+        System.out.println("1. Ficheros.");
+        System.out.println("2. Bases de datos.");
+        System.out.println("3. Salir");
     }
 
     public void subMenu() {
@@ -31,21 +28,22 @@ public class Vista {
         do { 
             try {
                 System.out.print("Seleccione una opción: ");
-                opcion = sc.nextInt();
-                sc.nextLine();
-            } catch (InputMismatchException e) {
+                opcion = Integer.parseInt(sc.nextLine()); 
+                entradaValida = true;
+            } catch (NumberFormatException e) { 
                 System.err.println("Error: Opción inválida.");
                 System.out.println("Por favor, introduce un opción válida.");
             }
-        } while (entradaValida);
+        } while (!entradaValida);
         return opcion;
     }
 
+    /*
     public File pedirFichero() throws IOException {
         File aux = null;
         boolean entradaValida = false;
         while (!entradaValida) {
-            System.out.print("Introduce el fichero con el que quieres trabajar: ");
+            System.out.print("Introduce el fichero con el que quieres trabajar (sólo disponibles ficheros de texto, binario o xml): ");
             String rutaFichero = sc.nextLine().trim();
             if (rutaFichero.isEmpty()) {
                 System.out.println("Error: La ruta no puede estar vacía.");
@@ -62,54 +60,77 @@ public class Vista {
                 } catch (IOException e) {
                     System.err.println("Error: Fichero inválido.");
                     System.out.println("Por favor, introduce una ruta válida.");
-                    throw e;
+                }
+            }
+        }
+        return aux;
+    }
+    */
+
+    public File pedirFichero() throws IOException {
+        File aux = null;
+        boolean entradaValida = false;
+        while (!entradaValida) {
+            System.out.print("Introduce el fichero con el que quieres trabajar (sólo disponibles ficheros de texto, binario o xml): ");
+            String rutaFichero = sc.nextLine().trim();
+            aux = new File(rutaFichero);
+            if (aux.exists()) {
+                entradaValida = true;
+            } else {
+                File directorioPadre = aux.getParentFile();
+                if (directorioPadre != null && !directorioPadre.exists()) {
+                    if (directorioPadre.mkdirs()) {
+                        System.out.println("Se han creado los directorios necesarios: " + directorioPadre.getAbsolutePath());
+                    } else {
+                        System.err.println("Error: No se pudieron crear los directorios necesarios para la ruta.");
+                        continue; 
+                    }
+                }
+                try {
+                    if (aux.createNewFile()) {
+                        System.out.println("Se ha creado el fichero '" + aux + "'.");
+                        entradaValida = true;
+                    } else {
+                        System.err.println("Error: Fichero inválido o no se pudo crear (problema de permisos/ruta).");
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error: Fichero inválido.");
+                    System.out.println("Por favor, introduce una ruta válida.");
                 }
             }
         }
         return aux;
     }
 
-    public String pedirDatabase() throws SQLException {
+    public String comprobarFichero(File file) {
+        String nombreFichero = file.getName().toLowerCase();
+        if (nombreFichero.endsWith(".txt")) {
+            return ".txt";
+        } else if (nombreFichero.endsWith(".bin")) {
+            return ".bin";
+        } else if (nombreFichero.endsWith(".xml")) {
+            return ".xml";
+        } else {
+            System.out.println("Error: Manejo de ficheros de la extensión de " + nombreFichero + " no disponible.");
+            System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
+            return "";
+        }
+    }
+
+    public String pedirDatabase() {
         System.out.println("Introduce el nombre de la base de datos: ");
         String nombre = sc.nextLine();
-        try (Connection conexion = DriverManager.getConnection("jdbc:mysql://localhost:3306/peliculas", "root", "root")) {
-            boolean existeDatabase = false;
-            String query = "show databases like ?";
-            try (PreparedStatement ps = conexion.prepareStatement(query)) {
-                ps.setString(1, nombre);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        existeDatabase = true;
-                    }
-                }
-            } catch (SQLException e) {
-                System.err.println("Error al verificar la existencia de la base de datos: " + e.getMessage());
-            }
-            if (!existeDatabase) {
-                String query2 = "CREATE DATABASE " + nombre;
-                try (java.sql.Statement stmt = conexion.createStatement()) {
-                    stmt.executeUpdate(query2);
-                    System.out.println("Se ha creado la base de datos '" + nombre + "'.");
-                } catch (SQLException e) {
-                    System.err.println("Error al crear la base de datos: " + e.getMessage());
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al establecer conexión inicial con la base de datos: " + e.getMessage());
-            throw e;
-        }
         return nombre;
     }
 
     public Libro crearLibro() {
         Libro libro = null;
         boolean entradaValida = false;
-        do { 
+        do {
             try {
                 System.out.println("Introduce a continuación los datos del nuevo libro.");
                 System.out.print("ISBN: ");
-                int isbn = sc.nextInt();
-                sc.nextLine();
+                int isbn = Integer.parseInt(sc.nextLine());
                 System.out.print("Titulo: ");
                 String titulo = sc.nextLine();
                 System.out.print("Autor: ");
@@ -119,29 +140,32 @@ public class Vista {
                 System.out.print("Género: ");
                 String genero = sc.nextLine();
                 libro = new Libro(isbn, titulo, autor, editorial, genero);
-            } catch (InputMismatchException e) {
-                System.err.println("Error: ISBN inválido.");
+                entradaValida = true;
+
+            } catch (NumberFormatException | InputMismatchException e) {
+                System.err.println("Error: ISBN inválido. Debe ser un número entero.");
                 System.out.println("Por favor, introduce un ISBN válido.");
             }
-        } while (entradaValida);
+        } while (!entradaValida);
         return libro;
     }
 
-    public int pedirLibro() {
+    public int pedirLibro(Map<Integer, Libro> biblioteca) {
+        String entrada;
         int isbn = -1;
-        boolean entradaValida = false;
-        do {
-            System.out.print("Introduce el ISBN del libro para la búsqueda: ");
-            try {
-                isbn = sc.nextInt();
-                sc.nextLine();
-                entradaValida = true;
-            } catch (InputMismatchException e) {
-                System.err.println("Error: ISBN inválido.");
-                System.out.println("Por favor, introduce un ISBN válido.");
-                sc.nextLine();
+        System.out.print("Introduce el ISBN o título del libro para la búsqueda: ");
+        entrada = sc.nextLine();
+        try {
+            isbn = Integer.parseInt(entrada);
+        } catch (NumberFormatException e) {
+            System.out.println("Se buscará el libro por título.");
+            for (Libro libro : biblioteca.values()) {
+                if (entrada.equalsIgnoreCase(libro.getTitulo())) {
+                    isbn = libro.getISBN();
+                    break;
+                }
             }
-        } while (entradaValida);
+        }
         return isbn;
     }
 

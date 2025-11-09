@@ -11,21 +11,53 @@ import org.w3c.dom.*;
 public final class Database implements Funcionalidades {
     
     private Connection conexion;
+    private String nombreDatabase;
     private String url;
     private String usuario;
     private String contraseña;
     private final Map<Integer, Libro> biblioteca;
     
-    public Database() {
-        this.url = "jdbc:mysql://localhost:3306/biblioteca";
+    public Database(String nombreDatabase) throws SQLException {
+        this.url = "jdbc:mysql://localhost:3306/";
+        this.nombreDatabase = nombreDatabase;
         this.usuario = "root";
         this.contraseña = "root";
         try {
-            this.conexion = DriverManager.getConnection(url, usuario, contraseña);
+            crearDatabase(this.nombreDatabase);
+            this.conexion = DriverManager.getConnection(this.url + this.nombreDatabase, this.usuario, this.contraseña);
+            System.out.println("Conexión principal a la BD '" + nombreDatabase + "' establecida.");
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error al establecer conexión inicial con la base de datos: " + e.getMessage());
+            throw e;
         }
         this.biblioteca = leerFichero();
+    }
+
+    private void crearDatabase(String nombreDatabase) throws SQLException {
+        try (Connection caux = DriverManager.getConnection(this.url, this.usuario, this.contraseña)) {
+            boolean existeDatabase = false;
+            String queryVerificar = "SHOW SCHEMAS LIKE ?"; 
+            try (PreparedStatement ps = caux.prepareStatement(queryVerificar)) {
+                ps.setString(1, nombreDatabase);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        existeDatabase = true;
+                    }
+                }
+            }
+            if (!existeDatabase) {
+                String queryCrearBD = "CREATE DATABASE " + nombreDatabase;
+                try (Statement stmt = caux.createStatement()) {
+                    stmt.executeUpdate(queryCrearBD);
+                    System.out.println("Base de datos '" + nombreDatabase + "' creada con éxito.");
+                }
+            }
+            String queryCrearTabla = "CREATE TABLE IF NOT EXISTS " + nombreDatabase + ".libro(isbn int primary key, titulo varchar (100), autor varchar (100), editorial varchar (100), genero varchar (100))";
+            try (Statement stmt = caux.createStatement()) {
+                stmt.executeUpdate(queryCrearTabla);
+                System.out.println("Tabla 'libro' verificada/creada en '" + nombreDatabase + "'.");
+            }
+        }
     }
     
     @Override
@@ -51,52 +83,74 @@ public final class Database implements Funcionalidades {
 
     @Override
     public void insertar(Libro libro) {
-        String query = "INSERT INTO libro (isbn,titulo,autor,editorial,genero) VALUES (";
-		try (PreparedStatement ps = conexion.prepareStatement(query)) {
-			ps.setInt(1, libro.getISBN());
+        String query = "INSERT INTO libro (isbn, titulo, autor, editorial, genero) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = this.conexion.prepareStatement(query)) {
+            ps.setInt(1, libro.getISBN());
             ps.setString(2, libro.getTitulo());
             ps.setString(3, libro.getAutor());
             ps.setString(4, libro.getEditorial());
             ps.setString(5, libro.getGenero());
-			System.out.println(query);
-            System.out.println(ps.executeUpdate());
+            int filasInsertadas = ps.executeUpdate();
+            System.out.println("Filas insertadas: " + filasInsertadas);
             this.biblioteca.put(libro.getISBN(), libro);
-		} catch (SQLException e){
-		    System.err.println(e.getMessage());
-		}
-	}
+        } catch (SQLException e) {
+            System.err.println("Error al insertar libro: " + e.getMessage());
+        }
+    }
     
     @Override
     public void borrar(int isbn) {
-        String query = "DELETE FROM libro WHERE isbn = " + isbn;
-        try (PreparedStatement ps = conexion.prepareStatement(query)) {
-            System.out.println(query);
-            System.out.println(ps.executeUpdate());
+        String query = "DELETE FROM libro WHERE isbn = ?";
+        try (PreparedStatement ps = this.conexion.prepareStatement(query)) {
+            ps.setInt(1, isbn);
+            int filasEliminadas = ps.executeUpdate();
+            System.out.println("Filas eliminadas: " + filasEliminadas);
             this.biblioteca.remove(isbn);
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error al borrar libro: " + e.getMessage());
         }
     }
 
     @Override
-	public void modificar(int isbn, Libro libro) {
-        String query = "UPDATE libro SET ";
-		try (PreparedStatement ps = conexion.prepareStatement(query)) {
-            this.biblioteca.remove(isbn);
-			ps.setInt(1, libro.getISBN());
-            ps.setString(2, libro.getTitulo());
-            ps.setString(3, libro.getAutor());
-            ps.setString(4, libro.getEditorial());
-            ps.setString(5, libro.getGenero());
-			System.out.println(query);
-            System.out.println(ps.executeUpdate());
-            this.biblioteca.put(libro.getISBN(), libro);
-		} catch (SQLException e){
-			System.err.println(e.getMessage());
-		}
-	}
+    public void modificar(int isbnAntiguo, Libro libroNuevo) {
+        String query = "UPDATE libro SET isbn = ?, titulo = ?, autor = ?, editorial = ?, genero = ? WHERE isbn = ?";
+        try (PreparedStatement ps = this.conexion.prepareStatement(query)) {
+            ps.setInt(1, libroNuevo.getISBN());
+            ps.setString(2, libroNuevo.getTitulo());
+            ps.setString(3, libroNuevo.getAutor());
+            ps.setString(4, libroNuevo.getEditorial());
+            ps.setString(5, libroNuevo.getGenero());
+            ps.setInt(6, isbnAntiguo); 
+            int filasAfectadas = ps.executeUpdate();
+            if (filasAfectadas > 0) {
+                this.biblioteca.remove(isbnAntiguo);
+                this.biblioteca.put(libroNuevo.getISBN(), libroNuevo);
+            }
+            System.out.println("Filas modificadas: " + filasAfectadas);
+        } catch (SQLException e){
+            System.err.println("Error al modificar libro: " + e.getMessage());
+        }
+    }
     
     /*
+
+    @Override
+    public void escribirLista() {
+        try {
+            String query = "UPDATE libro SET isbn = ?, titulo = ?, autor = ?, editorial = ?, genero = ?";
+            PreparedStatement ps = this.conexion.prepareStatement(query);
+            for (Libro libro : this.biblioteca.values()) {
+                ps.setInt(1, libro.getISBN());
+                ps.setString(2, libro.getTitulo());
+                ps.setString(3, libro.getAutor());
+                ps.setString(4, libro.getEditorial());
+                ps.setString(5, libro.getGenero());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     @Override
     public void buscar(int isbn) {
         try {
@@ -121,6 +175,7 @@ public final class Database implements Funcionalidades {
 
         }
     }
+
     */
 
     @Override
@@ -138,9 +193,8 @@ public final class Database implements Funcionalidades {
                     comienza = false;
                 }
             } catch (IOException e) {
-                System.err.println("Error al leer los libros del fichero: " + e.getMessage());
+                System.err.println("Error al escribir los libros del fichero: " + e.getMessage());
             }
-
         } else if (nombreFichero.endsWith(".bin")) {
             try (FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
@@ -148,7 +202,7 @@ public final class Database implements Funcionalidades {
                     oos.writeObject(libro);
                 }
             } catch (IOException e) {
-                System.err.println("Error al leer los libros del fichero: " + e.getMessage());
+                System.err.println("Error al escribir los libros del fichero: " + e.getMessage());
             }
         } else if (nombreFichero.endsWith(".xml")) {
             try {
@@ -159,24 +213,11 @@ public final class Database implements Funcionalidades {
                 documento.setXmlVersion("1.0");
                 for (Libro libro : this.biblioteca.values()) {
                     Element elemento = documento.createElement("libro");
-                    String valorAtributo = String.valueOf(libro.getISBN());
-                    elemento.setAttribute("ISBN", valorAtributo);
-                    Element titulo = documento.createElement("titulo");
-                    Text textoTitulo = documento.createTextNode(libro.getTitulo());
-                    titulo.appendChild(textoTitulo);
-                    elemento.appendChild(titulo);
-                    Element autor = documento.createElement("autor");
-                    Text textoAutor = documento.createTextNode(libro.getAutor());
-                    autor.appendChild(textoAutor);
-                    elemento.appendChild(autor);
-                    Element editorial = documento.createElement("editorial");
-                    Text textoEditorial = documento.createTextNode(libro.getEditorial());
-                    editorial.appendChild(textoEditorial);
-                    elemento.appendChild(editorial);
-                    Element genero = documento.createElement("genero");
-                    Text textoGenero = documento.createTextNode(libro.getGenero());
-                    genero.appendChild(textoGenero);
-                    elemento.appendChild(genero);
+                    elemento.setAttribute("ISBN", String.valueOf(libro.getISBN())); 
+                    elemento.appendChild(documento.createElement("titulo")).setTextContent(libro.getTitulo());
+                    elemento.appendChild(documento.createElement("autor")).setTextContent(libro.getAutor());
+                    elemento.appendChild(documento.createElement("editorial")).setTextContent(libro.getEditorial());
+                    elemento.appendChild(documento.createElement("genero")).setTextContent(libro.getGenero());
                     documento.getDocumentElement().appendChild(elemento);
                 }
                 Source source = new DOMSource(documento);
@@ -186,7 +227,7 @@ public final class Database implements Funcionalidades {
                 transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); 
                 transformer.transform(source, result);
             } catch (ParserConfigurationException | DOMException e) {
-                System.err.println("Error al leer los libros del fichero: " + e.getMessage());
+                System.err.println("Error al escribir los libros del fichero: " + e.getMessage());
             } catch (TransformerConfigurationException ex) {
                 System.err.println("Error de configuración del transformador XML: " + ex.getMessage());
             } catch (TransformerException ex) {
@@ -202,32 +243,30 @@ public final class Database implements Funcionalidades {
 
     @Override
     public void traspasarDatosDatabase(String nombreDatabase) {
-        try (Connection caux = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + nombreDatabase, usuario, contraseña)) {
-            String query3 = "CREATE TABLE IF NOT EXISTS libro (isbn int primary key, titulo varchar (100), autor varchar (100), editorial varchar (100), genero varchar (100))";
-            try (PreparedStatement ps1 = caux.prepareStatement(query3)) {
-                ps1.executeUpdate();
-            } catch (SQLException e) {
-                System.err.println("Error al crear o verificar la tabla 'libro': " + e.getMessage());
-                return;
-            }
-            String query4 = "TRUNCATE TABLE libro";
-            try (PreparedStatement ps2 = caux.prepareStatement(query4)) {
-                ps2.executeUpdate();
+        try {
+            crearDatabase(nombreDatabase);
+        } catch (SQLException e) {
+            System.err.println("Error al inicializar la base de datos" + e.getMessage());
+            return;
+        }
+        try (Connection caux = DriverManager.getConnection(this.url + nombreDatabase, this.usuario, this.contraseña)) {
+            String queryTruncar = "TRUNCATE TABLE libro";
+            try (Statement st = caux.createStatement()) { 
+                st.executeUpdate(queryTruncar);
                 System.out.println("Tabla 'libro' truncada (datos anteriores eliminados).");
             } catch (SQLException e) {
                 System.err.println("Error al truncar la tabla 'libro': " + e.getMessage());
                 return; 
             }
             for (Libro libro : this.biblioteca.values()) {
-                String query5 = "INSERT INTO libro (isbn,titulo,autor,editorial,genero) values (?,?,?,?,?)";
-                try (PreparedStatement ps3=caux.prepareStatement(query5)) {
-                    ps3.setInt(1, libro.getISBN());
-                    ps3.setString(2, libro.getTitulo());
-                    ps3.setString(3, libro.getAutor());
-                    ps3.setString(4, libro.getEditorial());
-                    ps3.setString(5, libro.getGenero());
-                    ps3.executeUpdate();
-                    ps3.close();
+                String queryInsertar = "INSERT INTO libro (isbn,titulo,autor,editorial,genero) values (?,?,?,?,?)";
+                try (PreparedStatement ps = caux.prepareStatement(queryInsertar)) {
+                    ps.setInt(1, libro.getISBN());
+                    ps.setString(2, libro.getTitulo());
+                    ps.setString(3, libro.getAutor());
+                    ps.setString(4, libro.getEditorial());
+                    ps.setString(5, libro.getGenero());
+                    ps.executeUpdate();
                 } catch (SQLException e) {
                     System.err.println(e.getMessage());
                 }

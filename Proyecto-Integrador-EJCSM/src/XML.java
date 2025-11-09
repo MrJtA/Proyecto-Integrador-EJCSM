@@ -19,14 +19,14 @@ public final class XML extends Fichero {
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document documento = builder.parse(this.file);
             NodeList padres = documento.getElementsByTagName("libro");
-            for (int i=0; i<padres.getLength(); i++) {
+            for (int i = 0; i<padres.getLength(); i++) {
                 Node nodo = padres.item(i);
                 if (nodo.getNodeType() == Node.ELEMENT_NODE) {
                     Element padre = (Element) nodo;
                     int isbn = Integer.parseInt(padre.getAttribute("ISBN"));
                     NodeList hijos = padre.getChildNodes();
                     List<String> listaHijos = new ArrayList<>();
-                    for (int j=0; j<hijos.getLength(); j++) {
+                    for (int j = 0; j < hijos.getLength(); j++) {
                         Node hijo = hijos.item(j);
                         if (hijo.getNodeType() == Node.ELEMENT_NODE) {
                             Element eHijo = (Element) hijo;
@@ -44,6 +44,36 @@ public final class XML extends Fichero {
         }
         return aux;
     }
+
+    /*
+    @Override
+    public Map<Integer, Libro> leerFichero() {
+        Map<Integer, Libro> aux = new HashMap<>();
+        try {
+            SAXBuilder saxBuilder = new SAXBuilder();
+			Document documento = saxBuilder.build(this.file);
+            Element raiz = documento.getRootElement();
+            List<Element> libros = raiz.getChildren();
+            for (int i = 0; i<libros.size(); i++) {
+                Element elemento = libros.get(i);
+                int isbn = Integer.parseInt(elemento.getAttribute("ISBN"));
+                String titulo = elemento.getChild("titulo").getText();
+                String autor = elemento.getChild("autor").getText();
+                String editorial = elemento.getChild("editorial").getText();
+                String genero = elemento.getChild("genero").getText();
+                Libro libro = new Libro(isbn, titulo, autor, editorial, genero);
+                aux.put(isbn, libro);
+            }
+        } catch (JDOMException e) { 
+            System.err.println("Error de parseo JDOM (XML mal formado, etc.): " + e.getMessage());
+        } catch (IOException ex) {
+            System.err.println("Error de E/S (archivo no encontrado/accesible): " + ex.getMessage());
+        } catch (NumberFormatException e) {
+            System.err.println("Error: El ISBN no es un número válido. " + e.getMessage());
+        }
+        return aux;
+    }
+    */
 
     @Override
     public void escribirLista() {

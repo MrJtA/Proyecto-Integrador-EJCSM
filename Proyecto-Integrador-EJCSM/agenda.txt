@@ -1,7 +1,9 @@
-Versión 2.3: Acceso a bases de datos. 
-- Pensar si es buena idea hacer una clase abstracta universal.
-- Pensar si es buena idea hacer un escribirLista para Database.
-- Pensar si es buena idea no hacer menu de ficheros y adaptarse al fichero puesto.
-- Modificar método buscar para que pueda buscar también por titulo del libro.
+Versión 2.4: Acceso a bases de datos.
 - Hacer packages.
-- Mejorar robustez en las conexiones con vista.
+- Optimizar controlador.
+- Arreglar ficheros.
+- Comentar errores.
+- Aplicar el principio de responsabilidad única para las clases de fichero y database:
+    - Crear fichero para la clase fichero.
+    - Traspasar datos para cada tipo solo en su respetiva clase.
+    - Pensar si es buena idea hacer una clase abstracta universal.

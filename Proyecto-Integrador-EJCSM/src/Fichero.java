@@ -24,7 +24,7 @@ public abstract class Fichero implements Funcionalidades {
     public abstract void escribirLista();
 
     public void escribirListaTexto() {
-        try (FileWriter fw = new FileWriter(file);
+        try (FileWriter fw = new FileWriter(this.file);
         BufferedWriter bw = new BufferedWriter(fw)) {
             boolean comienza = true;
             for (Libro libro : this.biblioteca.values()) {
@@ -35,18 +35,18 @@ public abstract class Fichero implements Funcionalidades {
                 comienza = false;
             }
         } catch (IOException e) {
-            System.err.println("Error al leer los libros del fichero: " + e.getMessage());
+            System.err.println("Error al escribir los libros del fichero: " + e.getMessage());
         }
     }
 
     public void escribirListaBinario() {
-        try (FileOutputStream fos = new FileOutputStream(file);
+        try (FileOutputStream fos = new FileOutputStream(this.file);
         ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             for (Libro libro : this.biblioteca.values()) {
                 oos.writeObject(libro);
             }
         } catch (IOException e) {
-            System.err.println("Error al leer los libros del fichero: " + e.getMessage());
+            System.err.println("Error al escribir los libros del fichero: " + e.getMessage());
         }
     }
 
@@ -59,40 +59,53 @@ public abstract class Fichero implements Funcionalidades {
             documento.setXmlVersion("1.0");
             for (Libro libro : this.biblioteca.values()) {
                 Element elemento = documento.createElement("libro");
-                String valorAtributo = String.valueOf(libro.getISBN());
-                elemento.setAttribute("ISBN", valorAtributo);
-                Element titulo = documento.createElement("titulo");
-                Text textoTitulo = documento.createTextNode(libro.getTitulo());
-                titulo.appendChild(textoTitulo);
-                elemento.appendChild(titulo);
-                Element autor = documento.createElement("autor");
-                Text textoAutor = documento.createTextNode(libro.getAutor());
-                autor.appendChild(textoAutor);
-                elemento.appendChild(autor);
-                Element editorial = documento.createElement("editorial");
-                Text textoEditorial = documento.createTextNode(libro.getEditorial());
-                editorial.appendChild(textoEditorial);
-                elemento.appendChild(editorial);
-                Element genero = documento.createElement("genero");
-                Text textoGenero = documento.createTextNode(libro.getGenero());
-                genero.appendChild(textoGenero);
-                elemento.appendChild(genero);
+                elemento.setAttribute("ISBN", String.valueOf(libro.getISBN())); 
+                elemento.appendChild(documento.createElement("titulo")).setTextContent(libro.getTitulo());
+                elemento.appendChild(documento.createElement("autor")).setTextContent(libro.getAutor());
+                elemento.appendChild(documento.createElement("editorial")).setTextContent(libro.getEditorial());
+                elemento.appendChild(documento.createElement("genero")).setTextContent(libro.getGenero());
                 documento.getDocumentElement().appendChild(elemento);
-            }
+                }
             Source source = new DOMSource(documento);
-            Result result = new StreamResult(file);
+            Result result = new StreamResult(this.file);
             Transformer transformer = newInstance().newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); 
             transformer.transform(source, result);
         } catch (ParserConfigurationException | DOMException e) {
-            System.err.println("Error al leer los libros del fichero: " + e.getMessage());
+            System.err.println("Error al escribir los libros del fichero: " + e.getMessage());
         } catch (TransformerConfigurationException ex) {
             System.err.println("Error de configuración del transformador XML: " + ex.getMessage());
         } catch (TransformerException ex) {
             System.err.println("Error durante la transformación o escritura del XML: " + ex.getMessage());
         }
     }
+
+    /*
+    public void escribirListaXML() {
+        try {
+            SAXBuilder saxBuilder = new SAXBuilder();
+            Document documento = saxBuilder.build(this.file);
+            Element raiz = documento.getRootElement();
+            raiz.removeContent();
+            for (Libro l : this.biblioteca.values()) {
+                Element elemento = new Element("libro");
+                elemento.setAttribute("ISBN", String.valueOf(l.getISBN()));
+                elemento.addContent(new Element("titulo").setText(d.getTitulo()));
+                elemento.addContent(new Element("autor").setText(d.getAutor()));
+                elemento.addContent(new Element("editorial").setText(d.getEditorial()));
+                elemento.addContent(new Element("genero").setText(d.getGenero()));
+                raiz.addContent(elemento);
+            }
+            XMLOutputter xmlOutput = new XMLOutputter(Format.getPrettyFormat());
+            xmlOutput.output(documento, new FileOutputStream(this.file));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JDOMException e) {
+            e.printStackTrace();
+        }
+    }
+     */
 
     @Override
     public void insertar(Libro libro) {
@@ -132,7 +145,7 @@ public abstract class Fichero implements Funcionalidades {
     @Override
     public void traspasarDatosFichero(File file) {
         String nombreFichero = file.getName().toLowerCase();
-        if (nombreFichero.endsWith(".txt") || nombreFichero.endsWith("")) {
+        if (nombreFichero.endsWith(".txt")) {
             escribirListaTexto();
         } else if (nombreFichero.endsWith(".bin")) {
             escribirListaBinario();
