@@ -156,7 +156,7 @@ public abstract class Fichero implements Funcionalidades {
             System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
             return;
         }
-        System.out.println("Se han traspasado los datos y creado una copia de seguridad en el fichero '" + file.getAbsolutePath() + "' correctamente.");
+        System.out.println("Se han traspasado los datos y creado una copia de seguridad en el fichero '" + file.getName() + "' correctamente.");
     }
 
     @Override

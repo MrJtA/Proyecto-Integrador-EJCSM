@@ -38,82 +38,52 @@ public class Vista {
         return opcion;
     }
 
-    /*
-    public File pedirFichero() throws IOException {
-        File aux = null;
-        boolean entradaValida = false;
-        while (!entradaValida) {
-            System.out.print("Introduce el fichero con el que quieres trabajar (sólo disponibles ficheros de texto, binario o xml): ");
-            String rutaFichero = sc.nextLine().trim();
-            if (rutaFichero.isEmpty()) {
-                System.out.println("Error: La ruta no puede estar vacía.");
-                continue;
-            }
-            aux = new File(rutaFichero);
-            if (aux.exists()) {
-                entradaValida = true;
-            } else {
-                try {
-                    aux.createNewFile();
-                    System.out.println("Se ha creado el fichero '" + aux + "'.");
-                    entradaValida = true;
-                } catch (IOException e) {
-                    System.err.println("Error: Fichero inválido.");
-                    System.out.println("Por favor, introduce una ruta válida.");
-                }
-            }
-        }
-        return aux;
-    }
-    */
-
-    public File pedirFichero() throws IOException {
-        File aux = null;
-        boolean entradaValida = false;
-        while (!entradaValida) {
-            System.out.print("Introduce el fichero con el que quieres trabajar (sólo disponibles ficheros de texto, binario o xml): ");
-            String rutaFichero = sc.nextLine().trim();
-            aux = new File(rutaFichero);
-            if (aux.exists()) {
-                entradaValida = true;
-            } else {
-                File directorioPadre = aux.getParentFile();
-                if (directorioPadre != null && !directorioPadre.exists()) {
-                    if (directorioPadre.mkdirs()) {
-                        System.out.println("Se han creado los directorios necesarios: " + directorioPadre.getAbsolutePath());
-                    } else {
-                        System.err.println("Error: No se pudieron crear los directorios necesarios para la ruta.");
-                        continue; 
-                    }
-                }
-                try {
-                    if (aux.createNewFile()) {
-                        System.out.println("Se ha creado el fichero '" + aux + "'.");
-                        entradaValida = true;
-                    } else {
-                        System.err.println("Error: Fichero inválido o no se pudo crear (problema de permisos/ruta).");
-                    }
-                } catch (IOException e) {
-                    System.err.println("Error: Fichero inválido.");
-                    System.out.println("Por favor, introduce una ruta válida.");
-                }
-            }
-        }
-        return aux;
+    public String pedirFichero() {
+        System.out.print("Introduce el fichero con el que quieres trabajar (sólo disponibles ficheros de texto, binarios y xml): ");
+        String entrada = sc.nextLine().trim();
+        return entrada;
     }
 
-    public String comprobarFichero(File file) {
-        String nombreFichero = file.getName().toLowerCase();
-        if (nombreFichero.endsWith(".txt")) {
-            return ".txt";
-        } else if (nombreFichero.endsWith(".bin")) {
-            return ".bin";
-        } else if (nombreFichero.endsWith(".xml")) {
-            return ".xml";
-        } else {
-            System.out.println("Error: Manejo de ficheros de la extensión de " + nombreFichero + " no disponible.");
+    public File crearFichero(String rutaFichero) {
+        File aux = null;
+        if (rutaFichero.isEmpty()) {
+            System.out.println("Error: La ruta no puede estar vacía.");
+            return null; // Termina la ejecución (como terminar el bucle)
+        }
+        aux = new File("Proyecto-Integrador-EJCSM/" + rutaFichero);
+        if (aux.exists()) {
+            if (aux.isDirectory()) {
+                System.out.println("Error: La ruta introducida es un directorio, no un fichero.");
+                System.out.println("Por favor, introduce un nombre de fichero.");
+                return null; // Termina la ejecución
+            }
+            return aux;
+        }
+        File directorioPadre = aux.getParentFile();
+        if (directorioPadre != null && !directorioPadre.exists()) {
+            System.out.println("El directorio '" + directorioPadre.getName() + "' no existe. Se va a crear.");
+            if (!directorioPadre.mkdirs()) {
+                System.err.println("Error: No se pudieron crear los directorios necesarios para la ruta.");
+                return null; // Termina la ejecución
+            }
+        }
+        if (!rutaFichero.endsWith(".txt") && !rutaFichero.endsWith(".bin") && !rutaFichero.endsWith(".xml")) {
+            System.out.println("Error: Manejo de ficheros de la extensión de " + rutaFichero + " no disponible.");
             System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
-            return "";
+            return null; // Termina la ejecución
+        }
+        try {
+            if (aux.createNewFile()) {
+                System.out.println("El fichero no existe, se va a crear.");
+                return aux; // Éxito en la creación
+            } else {
+                // Esto ocurre si, por ejemplo, el directorio padre era un fichero
+                System.err.println("Error: No se pudo crear el fichero (posiblemente falta de permisos o ruta inválida).");
+                return null; // Termina la ejecución
+            }
+        } catch (IOException e) {
+            System.err.println("Error: Fichero inválido o error de E/S.");
+            return null; // Termina la ejecución
         }
     }
 

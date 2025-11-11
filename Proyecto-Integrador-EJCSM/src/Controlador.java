@@ -1,5 +1,6 @@
 import java.io.*;
 import java.sql.SQLException;
+import java.util.Map;
 
 public class Controlador {
 
@@ -17,52 +18,44 @@ public class Controlador {
             vista.menu();
             int opcion = vista.opcion();
             switch (opcion) {
-                case 1 -> menuFicheros();
+                case 1 -> {
+                    String fichero = vista.pedirFichero();
+                    if (fichero.endsWith(".txt")) {
+                        funcionalidades = new Texto(vista.crearFichero(fichero));
+                        subMenu();
+                    }
+                    if (fichero.endsWith(".bin")) {
+                        funcionalidades = new Binario(vista.crearFichero(fichero));
+                        subMenu();
+                    }
+                    if (fichero.endsWith(".xml")) {
+                        funcionalidades = new XML(vista.crearFichero(fichero));
+                        subMenu();
+                    }
+                }
                 case 2 -> {
                     funcionalidades = new Database(vista.pedirDatabase());
                     subMenu();
                 }
-                case 5 -> seguir = false;
+                case 3 -> seguir = false;
                 default -> seguir = true;
             }
         }
     }
-
-    public void menuFicheros() throws IOException, SQLException {
-        boolean seguir = true;
-        while (seguir) {
-            File fichero = vista.pedirFichero();
-            String tipoFichero = vista.comprobarFichero(fichero);
-            switch (tipoFichero) {
-                case ".txt" -> {
-                    funcionalidades = new Texto(fichero);
-                    subMenu();
-                }
-                case ".bin" -> {
-                    funcionalidades = new Binario(fichero);
-                    subMenu();
-                }
-                case ".xml" -> {
-                    funcionalidades = new XML(fichero);
-                    subMenu();
-                }
-                default -> seguir = true;
-            }
-        }
-    }
-
+    
     public void subMenu() throws IOException, SQLException {
         boolean seguir = true;
         while (seguir) {
             vista.subMenu();
             int opcion = vista.opcion();
+            Map<Integer, Libro> biblioteca = funcionalidades.leerFichero();
             switch (opcion) {
-                case 1 -> vista.buscar(funcionalidades.leerFichero(), vista.pedirLibro(funcionalidades.leerFichero()));
+                case 1 -> vista.buscar(biblioteca, vista.pedirLibro(biblioteca));
                 case 2 -> vista.mostrar(funcionalidades.leerFichero());
                 case 3 -> funcionalidades.insertar(vista.crearLibro());
-                case 4 -> funcionalidades.borrar(vista.pedirLibro(funcionalidades.leerFichero()));
-                case 5 -> funcionalidades.modificar(vista.pedirLibro(funcionalidades.leerFichero()), vista.crearLibro());
-                case 6 -> funcionalidades.traspasarDatosFichero(vista.pedirFichero());
+                case 4 -> funcionalidades.borrar(vista.pedirLibro(biblioteca));
+                case 5 -> funcionalidades.modificar(vista.pedirLibro(biblioteca), vista.crearLibro());
+                case 6 -> funcionalidades.traspasarDatosFichero(vista.crearFichero(vista.pedirFichero()));
                 case 7 -> funcionalidades.traspasarDatosDatabase(vista.pedirDatabase());
                 case 8 -> seguir = false;
                 default -> seguir = true;

@@ -1,9 +1,8 @@
-Versión 2.4: Acceso a bases de datos.
+Versión 2.5: Acceso a bases de datos.
 - Hacer packages.
-- Optimizar controlador.
+- Comentar excepciones y mejorarlas.
 - Arreglar ficheros.
-- Comentar errores.
 - Aplicar el principio de responsabilidad única para las clases de fichero y database:
-    - Crear fichero para la clase fichero.
+    - Método crear fichero para la clase fichero.
     - Traspasar datos para cada tipo solo en su respetiva clase.
     - Pensar si es buena idea hacer una clase abstracta universal.
