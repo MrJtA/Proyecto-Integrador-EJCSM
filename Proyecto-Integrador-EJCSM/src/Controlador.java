@@ -20,18 +20,17 @@ public class Controlador {
             switch (opcion) {
                 case 1 -> {
                     String fichero = vista.pedirFichero();
+                    if (fichero == null) continue;
                     if (fichero.endsWith(".txt")) {
                         funcionalidades = new Texto(vista.crearFichero(fichero));
-                        subMenu();
                     }
-                    if (fichero.endsWith(".bin")) {
+                    else if (fichero.endsWith(".bin")) {
                         funcionalidades = new Binario(vista.crearFichero(fichero));
-                        subMenu();
                     }
-                    if (fichero.endsWith(".xml")) {
+                    else if (fichero.endsWith(".xml")) {
                         funcionalidades = new XML(vista.crearFichero(fichero));
-                        subMenu();
                     }
+                    subMenu();
                 }
                 case 2 -> {
                     funcionalidades = new Database(vista.pedirDatabase());
@@ -55,7 +54,11 @@ public class Controlador {
                 case 3 -> funcionalidades.insertar(vista.crearLibro());
                 case 4 -> funcionalidades.borrar(vista.pedirLibro(biblioteca));
                 case 5 -> funcionalidades.modificar(vista.pedirLibro(biblioteca), vista.crearLibro());
-                case 6 -> funcionalidades.traspasarDatosFichero(vista.crearFichero(vista.pedirFichero()));
+                case 6 -> {
+                    String fichero = vista.pedirFichero();
+                    if (fichero == null) continue;
+                    funcionalidades.traspasarDatosFichero(vista.crearFichero(fichero));
+                }
                 case 7 -> funcionalidades.traspasarDatosDatabase(vista.pedirDatabase());
                 case 8 -> seguir = false;
                 default -> seguir = true;

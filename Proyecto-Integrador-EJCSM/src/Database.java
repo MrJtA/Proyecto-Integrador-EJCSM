@@ -154,11 +154,16 @@ public final class Database implements Funcionalidades {
     @Override
     public void buscar(int isbn) {
         try {
-            String query = "SELECT FROM libro WHERE isbn = " + isbn;
-            System.out.println(query);
+            String query = "SELECT * FROM libro WHERE isbn = " + isbn;
             Statement st = conexion.createStatement();
-            int isOk = st.executeUpdate(query);
-            System.out.println(isOk);
+            ResultSet rs = st.executeQuery(query); 
+            if (rs.next()) {
+                System.out.println("Libro encontrado con ISBN: " + isbn);
+            } else {
+                System.out.println("No se encontró el libro con ISBN: " + isbn);
+            }
+            rs.close(); 
+            st.close(); 
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         }
@@ -167,12 +172,17 @@ public final class Database implements Funcionalidades {
     @Override
     public void mostrar() {
         String query = "SELECT * FROM libro";
-        try (PreparedStatement ps = conexion.prepareStatement(query)) {
+        try (PreparedStatement ps = conexion.prepareStatement(query)) { 
             System.out.println(query);
-            System.out.println(ps.executeUpdate());
+            ResultSet rs = ps.executeQuery(); 
+            while (rs.next()) {
+                String titulo = rs.getString("titulo"); 
+                System.out.println("Título encontrado: " + titulo);
+            }
+            System.out.println("Total de libros mostrados: " + count);
+            rs.close(); 
         } catch (SQLException e) {
             System.err.println(e.getMessage());
-
         }
     }
 

@@ -41,6 +41,11 @@ public class Vista {
     public String pedirFichero() {
         System.out.print("Introduce el fichero con el que quieres trabajar (sólo disponibles ficheros de texto, binarios y xml): ");
         String entrada = sc.nextLine().trim();
+        if (!entrada.endsWith(".txt") && !entrada.endsWith(".bin") && !entrada.endsWith(".xml")) {
+            System.out.println("Error: Manejo de ficheros de la extensión de " + entrada + " no disponible.");
+            System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
+            return null;
+        }
         return entrada;
     }
 
@@ -48,14 +53,14 @@ public class Vista {
         File aux = null;
         if (rutaFichero.isEmpty()) {
             System.out.println("Error: La ruta no puede estar vacía.");
-            return null; // Termina la ejecución (como terminar el bucle)
+            return null;
         }
         aux = new File("Proyecto-Integrador-EJCSM/" + rutaFichero);
         if (aux.exists()) {
             if (aux.isDirectory()) {
                 System.out.println("Error: La ruta introducida es un directorio, no un fichero.");
                 System.out.println("Por favor, introduce un nombre de fichero.");
-                return null; // Termina la ejecución
+                return null;
             }
             return aux;
         }
@@ -64,26 +69,20 @@ public class Vista {
             System.out.println("El directorio '" + directorioPadre.getName() + "' no existe. Se va a crear.");
             if (!directorioPadre.mkdirs()) {
                 System.err.println("Error: No se pudieron crear los directorios necesarios para la ruta.");
-                return null; // Termina la ejecución
+                return null;
             }
-        }
-        if (!rutaFichero.endsWith(".txt") && !rutaFichero.endsWith(".bin") && !rutaFichero.endsWith(".xml")) {
-            System.out.println("Error: Manejo de ficheros de la extensión de " + rutaFichero + " no disponible.");
-            System.out.println("Por favor, introduzca un fichero de texto, binario o xml.");
-            return null; // Termina la ejecución
         }
         try {
             if (aux.createNewFile()) {
                 System.out.println("El fichero no existe, se va a crear.");
-                return aux; // Éxito en la creación
+                return aux;
             } else {
-                // Esto ocurre si, por ejemplo, el directorio padre era un fichero
                 System.err.println("Error: No se pudo crear el fichero (posiblemente falta de permisos o ruta inválida).");
-                return null; // Termina la ejecución
+                return null;
             }
         } catch (IOException e) {
             System.err.println("Error: Fichero inválido o error de E/S.");
-            return null; // Termina la ejecución
+            return null;
         }
     }
 
